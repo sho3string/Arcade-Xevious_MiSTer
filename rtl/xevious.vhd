@@ -133,6 +133,7 @@ port(
  clock_18       : in std_logic;
  reset          : in std_logic;
 
+ dn_clk         : in  std_logic;
  dn_addr        : in  std_logic_vector(16 downto 0);
  dn_data        : in  std_logic_vector(7 downto 0);
  dn_wr          : in  std_logic;
@@ -155,7 +156,7 @@ port(
  flip           : in std_logic;
  h_offset	: in signed(3 downto 0);
  v_offset	: in signed(3 downto 0);
- test_v         : in std_logic_vector (3 downto 0);
+ --test_v         : in std_logic_vector (3 downto 0);
 
  audio          : out std_logic_vector(15 downto 0);
 
@@ -402,7 +403,7 @@ architecture struct of xevious is
  signal spflip_V ,spflip_H  : std_logic;
  signal spflip_2V,spflip_2H : std_logic_vector(1 downto 0);
  signal spflip_3V,spflip_3H : std_logic_vector(2 downto 0);
- signal spflips             : std_logic_vector(12 downto 0);
+ signal spflips             : std_logic_vector(14 downto 0);
 
  signal flip_h         : std_logic;
 
@@ -715,18 +716,18 @@ spflip_H <= sprite_attr(2) xor (flip_h xor flip); spflip_2H <= spflip_H & spflip
 spflip_V <= sprite_attr(3); spflip_2V <= spflip_V & spflip_V;
 -- finish preparing flip mask from flip attribute (flip v, flip h) and with respect to sprite size (2xV, 2xH)
 with sprite_attr(1 downto 0) select
-spflips <= 	"0000000"                       & spflip_V & spflip_2H & spflip_V & spflip_2V when "00",
-						"000000"  &            spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when "01",
-						"00000"   & spflip_V & '0'      & spflip_V & spflip_2H & spflip_V & spflip_2V when "10",
-						"00000"   & spflip_V & spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when others;
+spflips <= 	"000000000"                       & spflip_V & spflip_2H & spflip_V & spflip_2V when "00",
+						"00000000"  &            spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when "01",
+						"0000000"   & spflip_V & '0'      & spflip_V & spflip_2H & spflip_V & spflip_2V when "10",
+						"0000000"   & spflip_V & spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when others;
 
 -- set graphics rom address (external) from sprite code, flip mask, sprite size (2xV, 2xH), sprite horizontal tile and vertical line
 -- rom data will be latch within sprite machine loop at sprite_state = "010" and sprite_state = "011"
 with sprite_attr(1 downto 0) select
-sp_grphx_addr <=  (sp_code_ext(8 downto 0)                                    & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "00",
-									(sp_code_ext(8 downto 1) & 						      sprite_hcnt(4)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "01",
-									(sp_code_ext(8 downto 2) & sprite_vcnt(4) & sp_code_ext(0)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "10",
-									(sp_code_ext(8 downto 2) & sprite_vcnt(4) & sprite_hcnt(4)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when others;
+    sp_grphx_addr <=         (sp_code_ext(8 downto 0) & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0)) xor spflips when "00",
+						     (sp_code_ext(8 downto 1) & sprite_hcnt(4) & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "01",
+							 (sp_code_ext(8 downto 2) & sprite_vcnt(4) & sp_code_ext(0)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "10",
+							 (sp_code_ext(8 downto 2) & sprite_vcnt(4) & sprite_hcnt(4)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when others;
 
 -- set palette rom address with sprite color_set and serialized sprite graphics (1.5byte => 3bits) with respect to horizontal flip cmd
 sp_palette_addr <= sprite_color(5 downto 0) &
@@ -851,12 +852,12 @@ begin
 		bg_color_delay_5 <= bg_color_delay_5(6 downto 0) & bg_palette_msb_do(1);
 
 		-- select delay line output to finish bg horizontal scrolling with respect to 3 lsb bits
-		bg_color(0) <= bg_color_delay_0(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0))));
-		bg_color(1) <= bg_color_delay_1(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0))));
-		bg_color(2) <= bg_color_delay_2(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0))));
-		bg_color(3) <= bg_color_delay_3(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0))));
-		bg_color(4) <= bg_color_delay_4(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0))));
-		bg_color(5) <= bg_color_delay_5(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0))));
+		bg_color(0) <= bg_color_delay_0(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
+		bg_color(1) <= bg_color_delay_1(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
+		bg_color(2) <= bg_color_delay_2(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
+		bg_color(3) <= bg_color_delay_3(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
+		bg_color(4) <= bg_color_delay_4(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
+		bg_color(5) <= bg_color_delay_5(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
 
 		-- set fg color or transparent color with respect to fg serialized graphic bit
 		if fg_bit = '1' then
@@ -1338,10 +1339,16 @@ port map(
 );
 
 -- cs51xx program ROM
-cs51xx_prog : work.dpram generic map (10,8)
+cs51xx_prog : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 10,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and rom51_cs,
 	address_a => dn_addr(9 downto 0),
 	data_a    => dn_data,
@@ -1385,10 +1392,16 @@ port map(
 );
 
 -- cs54xx program ROM
-cs54xx_prog : work.dpram generic map (10,8)
+cs54xx_prog : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 10,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and rom54_cs,
 	address_a => dn_addr(9 downto 0),
 	data_a    => dn_data,
@@ -1487,10 +1500,16 @@ rom50_cs <= '1' when dn_addr(16 downto 11) = "101010"  else '0';
 rom51_cs <= '1' when dn_addr(16 downto 10) = "1010110" else '0';
 rom54_cs <= '1' when dn_addr(16 downto 10) = "1010111" else '0';
 
-sram : work.dpram generic map (17,8)
+sram : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 17,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and roms_cs,
 	address_a => dn_addr(16 downto 0),
 	data_a    => dn_data,
@@ -1502,10 +1521,16 @@ port map
 
 
 -- cs50xx program ROM
-cs50xx_prog : work.dpram generic map (11,8)
+cs50xx_prog : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 11,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and rom50_cs,
 	address_a => dn_addr(10 downto 0),
 	data_a    => dn_data,
@@ -1516,10 +1541,16 @@ port map
 );
 
 -- terrain map 2a ROM
-terrain_2a : work.dpram generic map (12,8)
+terrain_2a : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 12,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and romta_cs,
 	address_a => dn_addr(11 downto 0),
 	data_a    => dn_data,
@@ -1530,10 +1561,16 @@ port map
 );
 
 -- terrain map 2b ROM
-terrain_2b : work.dpram generic map (13,8)
+terrain_2b : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 13,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and romtb_cs,
 	address_a => dn_addr(12 downto 0),
 	data_a    => dn_data,
@@ -1544,10 +1581,16 @@ port map
 );
 
 -- terrain map 2c ROM
-terrain_2c : work.dpram generic map (12,8)
+terrain_2c : entity work.dualport_2clk_ram
+generic map 
+(
+    FALLING_A    => true,
+    ADDR_WIDTH   => 12,
+    DATA_WIDTH   => 8
+)
 port map
 (
-	clock_a   => clock_18,
+	clock_a   => dn_clk,
 	wren_a    => dn_wr and romtc_cs,
 	address_a => dn_addr(11 downto 0),
 	data_a    => dn_data,
@@ -1589,7 +1632,7 @@ port map(
  q    => wram0_do
 );
 -- working/sprite register RAM1   0x8000-0x87FF / 0x8800-0x8FFF
-wram1 : entity work.dpram
+wram1 : entity work.dualport_2clk_ram
 generic map(11,8)
 port map(
  clock_a   => clock_18n,
