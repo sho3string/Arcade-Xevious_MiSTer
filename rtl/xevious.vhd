@@ -852,13 +852,13 @@ begin
 		bg_color_delay_5 <= bg_color_delay_5(6 downto 0) & bg_palette_msb_do(1);
 
 		-- select delay line output to finish bg horizontal scrolling with respect to 3 lsb bits
-		bg_color(0) <= bg_color_delay_0(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
-		bg_color(1) <= bg_color_delay_1(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
-		bg_color(2) <= bg_color_delay_2(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
-		bg_color(3) <= bg_color_delay_3(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
-		bg_color(4) <= bg_color_delay_4(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
-		bg_color(5) <= bg_color_delay_5(to_integer(unsigned(bg_mask xor bg_offset_hs(2 downto 0) & "000000")));
-
+        bg_color(0) <= bg_color_delay_0(to_integer(unsigned(bg_mask(2 downto 0) xor bg_offset_hs(2 downto 0))));
+		bg_color(1) <= bg_color_delay_1(to_integer(unsigned(bg_mask(2 downto 0) xor bg_offset_hs(2 downto 0))));
+		bg_color(2) <= bg_color_delay_2(to_integer(unsigned(bg_mask(2 downto 0) xor bg_offset_hs(2 downto 0))));
+		bg_color(3) <= bg_color_delay_3(to_integer(unsigned(bg_mask(2 downto 0) xor bg_offset_hs(2 downto 0))));
+		bg_color(4) <= bg_color_delay_4(to_integer(unsigned(bg_mask(2 downto 0) xor bg_offset_hs(2 downto 0))));
+		bg_color(5) <= bg_color_delay_5(to_integer(unsigned(bg_mask(2 downto 0) xor bg_offset_hs(2 downto 0))));
+		
 		-- set fg color or transparent color with respect to fg serialized graphic bit
 		if fg_bit = '1' then
 			fg_color <= "0"&fg_attr(1 downto 0) & fg_attr(5 downto 2);
