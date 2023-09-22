@@ -291,14 +291,14 @@ reg [22:0] ram_addr, next_addr;
 reg [31:0] ram_data;
 reg        ram_wr;
 reg [13:0] hcnt_2 = 0;
-reg old_vs, old_de_2;
+reg old_vs_3, old_de_2;
 always @(posedge CLK_VIDEO) begin
 	ram_wr <= 0;
 	if(CE_PIXEL && FB_EN) begin
-		old_vs <= VGA_VS;
+		old_vs_3 <= VGA_VS;
 		old_de_2 <= VGA_DE;
 
-		if(~old_vs & VGA_VS) begin
+		if(~old_vs_3 & VGA_VS) begin
 			next_addr <=
 				do_flip    ? bufsize-3'd4 :
 				rotate_ccw ? (bufsize - stride) : {vsz-1'd1, 2'b00};
@@ -317,6 +317,36 @@ always @(posedge CLK_VIDEO) begin
 			hcnt_2 <= rotate_ccw ? (hcnt_2 + 3'd4) : (hcnt_2 - 3'd4);
 		end
 	end
+end
+
+endmodule
+
+// sync_fix taken from MiSTer's main framework file sys_top.v
+module sync_fix
+(
+	input clk,
+	
+	input sync_in,
+	output sync_out
+);
+
+assign sync_out = sync_in ^ pol;
+
+reg pol;
+integer pos = 0, neg = 0, cnt = 0;
+reg s1,s2;
+always @(posedge clk) begin
+	
+	s1 <= sync_in;
+	s2 <= s1;
+
+	if(~s2 & s1) neg <= cnt;
+	if(s2 & ~s1) pos <= cnt;
+
+	cnt <= cnt + 1;
+	if(s2 != s1) cnt <= 0;
+
+	pol <= pos > neg;
 end
 
 endmodule

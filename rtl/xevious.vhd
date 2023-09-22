@@ -146,7 +146,7 @@ port(
  video_hs       : out std_logic;
  video_vs       : out std_logic;
  video_en       : out std_logic;
-
+ 
  blank_h        : out std_logic;
  blank_v        : out std_logic;
 
@@ -403,7 +403,7 @@ architecture struct of xevious is
  signal spflip_V ,spflip_H  : std_logic;
  signal spflip_2V,spflip_2H : std_logic_vector(1 downto 0);
  signal spflip_3V,spflip_3H : std_logic_vector(2 downto 0);
- signal spflips             : std_logic_vector(14 downto 0);
+ signal spflips             : std_logic_vector(12 downto 0);
 
  signal flip_h         : std_logic;
 
@@ -716,18 +716,18 @@ spflip_H <= sprite_attr(2) xor (flip_h xor flip); spflip_2H <= spflip_H & spflip
 spflip_V <= sprite_attr(3); spflip_2V <= spflip_V & spflip_V;
 -- finish preparing flip mask from flip attribute (flip v, flip h) and with respect to sprite size (2xV, 2xH)
 with sprite_attr(1 downto 0) select
-spflips <= 	"000000000"                       & spflip_V & spflip_2H & spflip_V & spflip_2V when "00",
-						"00000000"  &            spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when "01",
-						"0000000"   & spflip_V & '0'      & spflip_V & spflip_2H & spflip_V & spflip_2V when "10",
-						"0000000"   & spflip_V & spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when others;
+spflips <= 	"0000000"                       & spflip_V & spflip_2H & spflip_V & spflip_2V when "00",
+						"000000"  &            spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when "01",
+						"00000"   & spflip_V & '0'      & spflip_V & spflip_2H & spflip_V & spflip_2V when "10",
+						"00000"   & spflip_V & spflip_H & spflip_V & spflip_2H & spflip_V & spflip_2V when others;
 
 -- set graphics rom address (external) from sprite code, flip mask, sprite size (2xV, 2xH), sprite horizontal tile and vertical line
 -- rom data will be latch within sprite machine loop at sprite_state = "010" and sprite_state = "011"
 with sprite_attr(1 downto 0) select
-    sp_grphx_addr <=         (sp_code_ext(8 downto 0) & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0)) xor spflips when "00",
-						     (sp_code_ext(8 downto 1) & sprite_hcnt(4) & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "01",
-							 (sp_code_ext(8 downto 2) & sprite_vcnt(4) & sp_code_ext(0)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when "10",
-							 (sp_code_ext(8 downto 2) & sprite_vcnt(4) & sprite_hcnt(4)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor spflips when others;
+    sp_grphx_addr <=         (sp_code_ext(8 downto 0) & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0)) xor "00" & spflips when "00",
+						     (sp_code_ext(8 downto 1) & sprite_hcnt(4) & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor "00" & spflips when "01",
+							 (sp_code_ext(8 downto 2) & sprite_vcnt(4) & sp_code_ext(0)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor "00" & spflips when "10",
+							 (sp_code_ext(8 downto 2) & sprite_vcnt(4) & sprite_hcnt(4)  & sprite_vcnt(3) & sprite_hcnt(3 downto 2) & sprite_vcnt(2 downto 0) ) xor "00" & spflips when others;
 
 -- set palette rom address with sprite color_set and serialized sprite graphics (1.5byte => 3bits) with respect to horizontal flip cmd
 sp_palette_addr <= sprite_color(5 downto 0) &
